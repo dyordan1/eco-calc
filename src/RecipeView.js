@@ -4,6 +4,7 @@ import { Grid } from '@material-ui/core';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
+import { GameItem } from './LocalDB.js'
 
 const useStyles = makeStyles({
   root: {
@@ -22,19 +23,12 @@ const useStyles = makeStyles({
   },
 });
 
-class GameItem {
-  constructor(count, label) {
-    this.count = count;
-    this.label = label;
-  }
-}
-
 // Renders a single recipe.
-export default function Recipe(props) {
+export default function RecipeView(props) {
   const classes = useStyles();
 
   function formatProduct(product) {
-    return <>{product.count == 1 ? "" : product.count} {product.label}</>
+    return <>{product.count == 1 ? "" : product.count} {product.label}</>;
   }
 
   function formatProducts(products) {
@@ -51,22 +45,22 @@ export default function Recipe(props) {
     <Card className={classes.root} variant="outlined">
       <CardContent>
         <Grid container justify="space-between">
-          <Grid item>
+          <Grid item key="left">
             <Typography className={classes.title} color="textSecondary" gutterBottom>
-              {props.station}
+              {props.recipe.station}
             </Typography>
           </Grid>
-          <Grid item>
+          <Grid item key="right">
             <Typography className={classes.title} gutterBottom>
-              <strong>${props.price}</strong>
+              <strong>${props.recipe.price}</strong>
             </Typography>
           </Grid>
         </Grid>
         <Typography variant="h5" component="h2">
-          {formatProducts(props.products)}
+          {formatProducts(props.recipe.products)}
         </Typography>
         <Typography className={classes.pos} color="textSecondary">
-          {props.skill}
+          {props.recipe.skill}
         </Typography>
       </CardContent>
     </Card>

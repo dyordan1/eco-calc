@@ -1,6 +1,6 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Typography, IconButton  } from '@material-ui/core';
+import { AppBar, Toolbar, Typography, IconButton } from '@material-ui/core';
 import { Menu, Settings } from '@material-ui/icons';
 
 const useStyles = makeStyles((theme) => ({
@@ -30,7 +30,7 @@ function Header() {
         <IconButton edge="end" color="inherit"><Settings/></IconButton>
       </Toolbar>
     </AppBar>
-  </div>
+  </div>;
 }
 
-export default Header
+export default Header;
