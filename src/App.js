@@ -2,11 +2,11 @@ import React from 'react';
 import './App.css';
 import Header from './Header.js';
 import RecipeView from './RecipeView.js';
-import { Grid, CircularProgress } from '@material-ui/core';
-import { withStyles } from '@material-ui/core/styles';
-import { v4 } from 'uuid'
-import LocalDB from './LocalDB.js'
-import { DBContext } from './LocalDB.js'
+import {Grid, CircularProgress} from '@material-ui/core';
+import {withStyles} from '@material-ui/core/styles';
+import {v4} from 'uuid';
+import LocalDB from './LocalDB.js';
+import {DBContext} from './LocalDB.js';
 
 const styles = (theme) => ({
   root: {
@@ -24,35 +24,36 @@ const styles = (theme) => ({
 
 class App extends React.Component {
   constructor() {
-    super()
+    super();
     this.state = {
-      localdb: new LocalDB()
-    }
+      localdb: new LocalDB(),
+    };
   }
 
   render() {
-    const { classes } = this.props;
-    const { localdb } = this.state;
+    const {classes} = this.props;
+    const {localdb} = this.state;
 
-    var appContent
+    let appContent;
     if (!localdb.initialized) {
-      let app = this
-      appContent = <CircularProgress />
+      const app = this;
+      appContent = <CircularProgress />;
       localdb.init().then(() => {
-        app.forceUpdate()
-      })
+        app.forceUpdate();
+      });
     } else {
-      let listItems = [];
+      const listItems = [];
 
-      for (let product in localdb.products) {
-        let recipe = localdb.products[product][0]
-        listItems.push(<Grid item key={v4()}>
-          <RecipeView recipe={recipe}/>
-        </Grid>)
-      }
+      localdb.recipes.forEach((recipes) => {
+        const recipe = recipes[0];
+        const key = v4();
+        listItems.push(<Grid item key={key}>
+          <RecipeView recipe={recipe} key={key}/>
+        </Grid>);
+      });
       appContent = <Grid container justify="center" className={classes.root} spacing={2}>
         {listItems}
-      </Grid>
+      </Grid>;
     }
 
     return (<>
@@ -60,8 +61,8 @@ class App extends React.Component {
         <Header />
         {appContent}
       </DBContext.Provider>
-    </>)
+    </>);
   }
 }
 
-export default withStyles(styles, { withTheme: true })(App);
+export default withStyles(styles, {withTheme: true})(App);
