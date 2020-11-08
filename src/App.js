@@ -22,7 +22,7 @@ class App extends React.Component {
     super(props);
     this.state = {
       localdb: new LocalDB(this.props.cookies),
-      openCookieConsent: this.props.cookies.get("consent") == undefined,
+      openCookieConsent: this.props.cookies.get("consent") === undefined,
     };
   }
 
@@ -34,7 +34,7 @@ class App extends React.Component {
   }
 
   render() {
-    const {classes, cookies} = this.props;
+    const {classes} = this.props;
     const {localdb, openCookieConsent} = this.state;
 
     let appContent;
@@ -51,7 +51,7 @@ class App extends React.Component {
         const recipe = recipes[0];
         const key = v4();
         listItems.push(<Grid item key={key}>
-          <RecipeView recipe={recipe} key={key}/>
+          <RecipeView recipe={recipe} recipeId={key}/>
         </Grid>);
       });
       appContent = <Grid container justify="center" className={classes.root} spacing={2}>

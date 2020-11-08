@@ -1,6 +1,6 @@
 import React from 'react';
 import {withStyles} from '@material-ui/core/styles';
-import {AppBar, Backdrop, CircularProgress, Card, CardContent, Toolbar, Typography, IconButton, Dialog, DialogTitle, DialogContent, InputAdornment, Grid, ListItemText, TextField} from '@material-ui/core';
+import {AppBar, Backdrop, CircularProgress, Card, CardContent, Toolbar, Typography, IconButton, Dialog, DialogTitle, DialogContent, InputAdornment, Grid, TextField} from '@material-ui/core';
 import {Menu, Settings} from '@material-ui/icons';
 import {DBContext} from './LocalDB.js';
 
@@ -45,8 +45,7 @@ class Header extends React.Component {
   updatePricing(label) {
     return (event) => {
       let value = event.target.value;
-      console.log(this.context);
-      if (value != '' && !isNaN(value)) {
+      if (value !== '' && !isNaN(value)) {
         this.context.updateRawMatPricing(label, value);
       }
     };
