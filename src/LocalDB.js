@@ -2,7 +2,74 @@ import React from 'react';
 import {getSkill, getRecipeData} from './recipe_data.js';
 import {getItemData} from './item_data.js';
 
-const DBContext = React.createContext(undefined);
+const defaultPricing = {
+  "Acorn": 1.0,
+	"Clay": 1.0,
+	"Agave Leaves": 1.0,
+	"Dirt": 1.0,
+	"Amanita Mushrooms": 1.0,
+	"Basalt": 1.0,
+	"Gneiss": 1.0,
+	"Granite": 1.0,
+	"Limestone": 1.0,
+	"Sandstone": 1.0,
+	"Shale": 1.0,
+	"Beet": 1.0,
+	"Corn": 1.0,
+	"Heart Of Palm": 1.0,
+	"Wood Pulp": 1.0,
+	"Taro Root": 1.0,
+	"Tomato": 1.0,
+	"Wheat": 1.0,
+	"Beans": 1.0,
+	"Beet Greens": 1.0,
+	"Bison Carcass": 1.0,
+	"Rice": 1.0,
+	"Bolete Mushrooms": 1.0,
+	"Camas Bulb": 1.0,
+	"Bass": 1.0,
+	"Blue Shark": 1.0,
+	"Cod": 1.0,
+	"Crab Carcass": 1.0,
+	"Moon Jellyfish": 1.0,
+	"Pacific Sardine": 1.0,
+	"Salmon": 1.0,
+	"Trout": 1.0,
+	"Tuna": 1.0,
+	"Pumpkin": 1.0,
+	"Giant Cactus Fruit": 1.0,
+	"Fireweed Shoots": 1.0,
+	"Papaya": 1.0,
+	"Pineapple": 1.0,
+	"Urchin": 1.0,
+	"Birch Log": 1.0,
+	"Cedar Log": 1.0,
+	"Ceiba Log": 1.0,
+	"Fir Log": 1.0,
+	"Joshua Log": 1.0,
+	"Oak Log": 1.0,
+	"Palm Log": 1.0,
+	"Redwood Log": 1.0,
+	"Saguaro Rib": 1.0,
+	"Spruce Log": 1.0,
+	"Compost": 1.0,
+	"Cookeina Mushrooms": 1.0,
+	"Crimini Mushrooms": 1.0,
+	"Copper Ore": 1.0,
+	"Gold Ore": 1.0,
+	"Iron Ore": 1.0,
+	"Elk Carcass": 1.0,
+	"Prickly Pear Fruit": 1.0,
+	"Fiddleheads": 1.0,
+	"Huckleberries": 1.0,
+	"Mountain Goat Carcass": 1.0,
+	"Kelp": 1.0,
+	"Bighorn Carcass": 1.0,
+	"Clam": 1.0,
+	"Alligator Carcass": 1.0,
+	"Jaguar Carcass": 1.0,
+	"Wolf Carcass": 1.0
+}
 
 /** An in-game recipe that consumes certain items and produces other items. */
 class Recipe {
@@ -10,13 +77,15 @@ class Recipe {
    * @constructor
    * @param {string} station where it's made
    * @param {string} skill what skill it requires
+   * @param {number} craftTime time in minutes it takes to craft recipe
    * @param {GameItemInstance[]} ingredients the ingredients required
    * @param {GameItemInstance[]} products the products made
    * @param {number} [price] (cached) price for this item.
    */
-  constructor(station, skill, ingredients, products, price = 20) {
+  constructor(station, skill, craftTime, ingredients, products, price = 20) {
     this.station = station;
     this.skill = skill;
+    this.craftTime = craftTime
     this.ingredients = ingredients;
     this.products = products;
     this.price = price;
@@ -57,6 +126,7 @@ class GameItem {
     this.label = label;
     this.type = type;
     this.children = [];
+    this.price = 0.0;
   }
 
   /**
@@ -70,16 +140,34 @@ class GameItem {
 
     this.children.push(child);
   }
+
+  setPrice(price) {
+    this.price = price
+  }
 }
 
 /** Master database for all Eco data. */
 export default class LocalDB {
   /***/
-  constructor() {
+  constructor(cookies) {
     this.initialized = false;
     this.recipes = new Map();
     this.rawMats = new Map();
     this.items = new Map();
+    this.backgroundWorker = new Worker('worker.js');
+    this.backgroundWorker.onmessage = (e) => {
+      console.log('Master', e);
+    }
+    if (cookies.get("consent") === "true") {
+      this.cookies = cookies;
+      this.sessionPricing = JSON.parse(cookies.get('rawGoodsPricing', {doNotParse: true}));
+      if (this.sessionPricing === undefined) {
+        this.sessionPricing = defaultPricing;
+        this.sessionPricing = cookies.set('rawGoodsPricing', JSON.stringify(defaultPricing));
+      }
+    } else {
+      this.sessionPricing = defaultPricing;
+    }
   }
 
   /** Initialize the DB */
@@ -98,6 +186,7 @@ export default class LocalDB {
           const recipe = masterDutta.recipes[recipeName];
           const craftingStation = recipe.craftStn[0];
           const skillNeeded = getSkill(recipe.skillNeeds);
+          const craftTime = recipe.baseCraftTime;
 
           // For each variant
           for (const variantName in recipe.variants) {
@@ -144,6 +233,7 @@ export default class LocalDB {
                     new Recipe(
                         craftingStation,
                         skillNeeded,
+                        craftTime,
                         ingredientList,
                         productList));
               }
@@ -159,6 +249,7 @@ export default class LocalDB {
             !allProducts.has(item.label) && item.type == ItemType.ITEM);
       for (let i=0; i < rawMats.length; i++) {
         const item = rawMats[i];
+        item.setPrice(this.sessionPricing[item.label]);
         this.rawMats.set(item.label, item);
       }
 
@@ -182,14 +273,37 @@ export default class LocalDB {
         }
       }
 
-      console.log(this.recipes);
       console.log(this.rawMats);
-      console.log(this.items);
 
       this.initialized = true;
       resolve(this);
     });
   }
+
+  updateRawMatPricing(label, value) {
+    this.rawMats.get(label).setPrice(value);
+    this.sessionPricing[label] = value;
+  }
+
+  setCookie(name,value,days) {
+    if (!this.cookies) {
+      return;
+    }
+
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (JSON.stringify(value) || "")  + expires + "; path=/";
+  }
+
+  flushRawMatPricing() {
+    this.setCookie('rawGoodsPricing', this.sessionPricing)
+  }
 }
+
+const DBContext = React.createContext(undefined);
 
 export {GameItem, DBContext};
