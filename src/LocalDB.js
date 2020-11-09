@@ -140,7 +140,7 @@ class GameItem {
     this.type = type;
     this.children = [];
     this.parents = [];
-    this.price = 0.0;
+    this.price = undefined;
   }
 
   /**
@@ -172,13 +172,15 @@ export default class LocalDB {
     this.items = new Map();
     this.backgroundWorker = new Worker('worker.js');
     this.backgroundWorker.onmessage = (e) => {
-      console.log('Master', e);
+      console.log('Master', e, e.data);
     }
     if (cookies.get("consent") === "true") {
       this.cookies = cookies;
-      this.sessionPricing = JSON.parse(cookies.get('rawGoodsPricing', {doNotParse: true}));
-      if (this.sessionPricing === undefined) {
+      let cookiePricing = cookies.get('rawGoodsPricing', {doNotParse: true});
+      if (cookiePricing === undefined) {
         this.sessionPricing = defaultPricing;
+      } else {
+        this.sessionPricing = JSON.parse(cookiePricing);
       }
     } else {
       this.sessionPricing = defaultPricing;
@@ -322,8 +324,7 @@ export default class LocalDB {
   }
 
   flushRawMatPricing() {
-    //this.setCookie('rawGoodsPricing', this.sessionPricing);
-    console.log(this.items);
+    this.setCookie('rawGoodsPricing', this.sessionPricing);
     this.backgroundWorker.postMessage({type: 'recalculate', payload: {recipes: this.recipes, items: this.items}});
   }
 }
