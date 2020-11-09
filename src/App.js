@@ -21,7 +21,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      localdb: new LocalDB(this.props.cookies),
+      localdb: new LocalDB(this, this.props.cookies),
       openCookieConsent: this.props.cookies.get("consent") === undefined,
     };
   }
@@ -47,8 +47,11 @@ class App extends React.Component {
     } else {
       const listItems = [];
 
-      localdb.products.forEach((recipes) => {
-        const recipe = recipes[0];
+      localdb.products.forEach((product) => {
+        let recipe = product.bestRecipe;
+        if (recipe === undefined) {
+          recipe = product.recipes[0];
+        }
         const key = v4();
         listItems.push(<Grid item key={key}>
           <RecipeView recipe={recipe} recipeId={key}/>

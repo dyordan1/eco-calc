@@ -1,3 +1,20 @@
+upgradeMultiplier = function(tables, recipe) {
+  switch(tables.get(recipe.station).installedUpgradeTier) {
+    case 0:
+      return 1;
+    case 1:
+      return 0.9;
+    case 2:
+      return 0.75;
+    case 3:
+      return 0.6;
+    case 4:
+      return 0.55;
+    case 5:
+      return 0.5;
+  }
+}
+
 onmessage = function(e) {
   if(e.data.type == 'recalculate') {
     payload = e.data.payload;
@@ -23,12 +40,18 @@ onmessage = function(e) {
         if (task.type === 'recipe') {
           let recipe = task.o;
           recipesInStack.add(recipe);
+          // Fuck it.
+          if (recipe.station === 'Oil Refinery') {
+            calculationTasks.pop();
+            continue;
+          }
           if (recipe.price !== undefined) {
             calculationTasks.pop();
             continue;
           }
 
           let price = 0;
+          let resourceMulti = upgradeMultiplier(payload.tables, recipe);
           for (let i = 0; i < recipe.ingredients.length; i++) {
             let ingredient = recipe.ingredients[i].item;
             if (!itemsInStack.has(ingredient)) {
@@ -36,7 +59,7 @@ onmessage = function(e) {
                 calculationTasks.push({type: 'item', o: ingredient});
                 price = NaN;
               } else {
-                price += recipe.ingredients[i].count * ingredient.price;
+                price += recipe.ingredients[i].count * resourceMulti * ingredient.price;
               }
             }
           }
@@ -89,7 +112,17 @@ onmessage = function(e) {
         }
       }
 
-      postMessage(item);
+      let bestRecipe = undefined;
+      if (item.recipes !== undefined) {
+        for (let i = 0; i < item.recipes.length; i++) {
+          if (item.recipes[i].price == item.price) {
+            bestRecipe = item.recipes[i];
+            break;
+          }
+        }
+      }
+
+      postMessage({type: 'calculatedPrice', payload: {item: item, bestRecipe: bestRecipe}});
     });
   }
 }

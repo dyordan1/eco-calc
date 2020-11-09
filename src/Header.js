@@ -1,6 +1,6 @@
 import React from 'react';
 import {withStyles} from '@material-ui/core/styles';
-import {AppBar, Backdrop, CircularProgress, Card, CardContent, Toolbar, Typography, IconButton, Dialog, DialogTitle, DialogContent, InputAdornment, Grid, TextField} from '@material-ui/core';
+import {AppBar, Tabs, Tab, Select, MenuItem, Backdrop, CircularProgress, Card, CardContent, Toolbar, Typography, IconButton, Dialog, DialogTitle, DialogContent, Grid, TextField} from '@material-ui/core';
 import {Menu, Settings} from '@material-ui/icons';
 import {DBContext} from './LocalDB.js';
 
@@ -31,6 +31,7 @@ class Header extends React.Component {
     this.state = {
       settingsOpen: false,
       slowAsShitPopupOpen: false,
+      settingsTabOpen: 0,
     };
   }
 
@@ -38,7 +39,7 @@ class Header extends React.Component {
     this.setState({settingsOpen: true});
   };
 
-  handleClose(value) {
+  handleClose() {
     this.setState({settingsOpen: false, slowAsShitPopupOpen: true});
   };
 
@@ -47,6 +48,15 @@ class Header extends React.Component {
       let value = event.target.value;
       if (value !== '' && !isNaN(value)) {
         this.context.updateRawMatPricing(label, value);
+      }
+    };
+  };
+
+  updateTier(label) {
+    return (event) => {
+      let value = event.target.value;
+      if (value !== '' && !isNaN(value)) {
+        this.context.updateTableTier(label, value);
       }
     };
   };
@@ -61,9 +71,13 @@ class Header extends React.Component {
     }
   }
 
+  handleChange(newValue) {
+    this.setState({settingsTabOpen: newValue});
+  };
+
   render() {
     const {classes} = this.props;
-    const {settingsOpen, slowAsShitPopupOpen} = this.state;
+    const {settingsOpen, slowAsShitPopupOpen, settingsTabOpen} = this.state;
 
     return <div className={classes.root}>
       <AppBar position="static">
@@ -80,32 +94,70 @@ class Header extends React.Component {
       <Dialog fullWidth={true} maxWidth="lg" onClose={() => this.handleClose()} aria-labelledby="simple-dialog-title" open={settingsOpen}>
         <DialogTitle id="simple-dialog-title">Set raw goods pricing</DialogTitle>
         <DialogContent>
-          <Grid container className={classes.gridRoot} justify="center" spacing={2}>
-            <DBContext.Consumer>
-              {(localdb) => Array.from(localdb.rawMats.values()).map((rawMat) => (
-                <Grid item>
-                  <Card className={classes.card} variant="outlined">
-                    <CardContent>
-                      <Typography color="textSecondary" gutterBottom>
-                        {rawMat.label}
-                      </Typography>
-                      <TextField
-                        label="Price"
-                        type="number"
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        startAdornment={<InputAdornment position="start">$</InputAdornment>}
-                        variant="outlined"
-                        defaultValue={rawMat.price}
-                        onChange={(event) => this.updatePricing(rawMat.label)(event)}
-                      />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </DBContext.Consumer>
-          </Grid>
+          <AppBar position="static">
+            <Tabs value={settingsTabOpen} onChange={(e, val) => this.handleChange(val)} aria-label="simple tabs example">
+              <Tab label="Raw Goods" />
+              <Tab label="Crafting Tables" />
+              <Tab label="Profit Margins" />
+            </Tabs>
+          </AppBar>
+          {settingsTabOpen === 0 &&
+            (<Grid container className={classes.gridRoot} justify="center" spacing={2}>
+              <DBContext.Consumer>
+                {(localdb) => Array.from(localdb.rawMats.values()).map((rawMat) => (
+                  <Grid item key={rawMat.label}>
+                    <Card className={classes.card} variant="outlined">
+                      <CardContent>
+                        <Typography color="textSecondary" gutterBottom>
+                          {rawMat.label}
+                        </Typography>
+                        <TextField
+                          label="Price"
+                          type="number"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          variant="outlined"
+                          defaultValue={rawMat.price}
+                          onChange={(event) => this.updatePricing(rawMat.label)(event)}
+                        />
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </DBContext.Consumer>
+            </Grid>)}
+            {settingsTabOpen === 1 &&
+              (<Grid container className={classes.gridRoot} justify="center" spacing={2}>
+                <DBContext.Consumer>
+                  {(localdb) => Array.from(localdb.tables.values()).map((table) => (
+                    <Grid item key={table.label}>
+                      <Card className={classes.card} variant="outlined">
+                        <CardContent>
+                          <Typography color="textSecondary" gutterBottom>
+                            {table.label}
+                          </Typography>
+                          <Select
+                            label="Installed Upgrade"
+                            defaultValue={table.installedUpgradeTier}
+                            variant="outlined"
+                            onChange={(event) => this.updateTier(table.label)(event)}
+                          >
+                            <MenuItem value={0}>
+                              <em>None</em>
+                            </MenuItem>
+                            <MenuItem value={1}>Upgrade 1</MenuItem>
+                            <MenuItem value={2}>Upgrade 2</MenuItem>
+                            <MenuItem value={3}>Upgrade 3</MenuItem>
+                            <MenuItem value={4}>Upgrade 4</MenuItem>
+                            <MenuItem value={5}>Specialty</MenuItem>
+                          </Select>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </DBContext.Consumer>
+              </Grid>)}
         </DialogContent>
       </Dialog>
       <Backdrop open={slowAsShitPopupOpen} className={classes.slowAsShitBackdrop}>

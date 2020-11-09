@@ -82,6 +82,13 @@ const defaultPricing = {
 	"Turkey Carcass": 10,
 }
 
+class CraftingTable {
+  constructor(label, installedUpgradeTier = 0) {
+   this.label = label;
+   this.installedUpgradeTier = installedUpgradeTier;
+  }
+}
+
 /** An in-game recipe that consumes certain items and produces other items. */
 class Recipe {
   /**
@@ -161,18 +168,39 @@ class GameItem {
   }
 }
 
+class Product {
+  constructor(recipes, bestRecipe = undefined) {
+   this.recipes = recipes;
+   this.bestRecipe = bestRecipe;
+  }
+}
+
 /** Master database for all Eco data. */
 export default class LocalDB {
   /***/
-  constructor(cookies) {
+  constructor(app, cookies) {
+    this.app = app;
     this.initialized = false;
     this.recipes = new Map();
     this.products = new Map();
     this.rawMats = new Map();
     this.items = new Map();
+    this.tables = new Map();
+    setTimeout(function() {
+      app.forceUpdate();
+    }, 5000);
     this.backgroundWorker = new Worker('worker.js');
     this.backgroundWorker.onmessage = (e) => {
-      console.log('Master', e, e.data);
+      if (e.data.type === 'calculatedPrice') {
+        let payload = e.data.payload;
+        let targetItem = this.products.get(payload.item.label);
+        if (targetItem !== undefined) {
+          targetItem.price = payload.item.price;
+          if (payload.bestRecipe !== undefined) {
+            targetItem.bestRecipe = payload.bestRecipe;
+          }
+        }
+      }
     }
     if (cookies.get("consent") === "true") {
       this.cookies = cookies;
@@ -181,6 +209,10 @@ export default class LocalDB {
         this.sessionPricing = defaultPricing;
       } else {
         this.sessionPricing = JSON.parse(cookiePricing);
+      }
+      this.sessionTableData = cookies.get('tableUpgrades', {doNotParse: true});
+      if (this.sessionTableData !== undefined) {
+        this.sessionTableData = JSON.parse(this.sessionTableData);
       }
     } else {
       this.sessionPricing = defaultPricing;
@@ -240,6 +272,14 @@ export default class LocalDB {
                 allProducts.set(label, item);
               }
 
+              if (!this.tables.has(craftingStation)) {
+                let upgradeLevel = 0;
+                if (this.sessionTableData !== undefined) {
+                  upgradeLevel = this.sessionTableData[craftingStation];
+                }
+                this.tables.set(craftingStation, new CraftingTable(craftingStation, upgradeLevel));
+              }
+
               let newRecipe = new Recipe(
                   v4(),
                   craftingStation,
@@ -251,11 +291,11 @@ export default class LocalDB {
               for (let i = 0; i < productList.length; i++) {
                 const product = productList[i];
                 if (!this.products.has(product.item.label)) {
-                  this.products.set(product.item.label, []);
+                  this.products.set(product.item.label, new Product([]));
                 }
 
                 this.recipes.set(newRecipe.id, newRecipe);
-                this.products.get(product.item.label).push(newRecipe);
+                this.products.get(product.item.label).recipes.push(newRecipe);
               }
             }
           }
@@ -309,6 +349,10 @@ export default class LocalDB {
     this.sessionPricing[label] = value;
   }
 
+  updateTableTier(label, value) {
+    this.tables.get(label).installedUpgradeTier = value;
+  }
+
   setCookie(name,value,days) {
     if (!this.cookies) {
       return;
@@ -325,7 +369,8 @@ export default class LocalDB {
 
   flushRawMatPricing() {
     this.setCookie('rawGoodsPricing', this.sessionPricing);
-    this.backgroundWorker.postMessage({type: 'recalculate', payload: {recipes: this.recipes, items: this.items}});
+    this.setCookie('tableUpgrades', Object.fromEntries([...this.tables.values()].map((table) => [table.label, table.installedUpgradeTier])));
+    this.backgroundWorker.postMessage({type: 'recalculate', payload: {recipes: this.recipes, items: this.items, tables: this.tables}});
   }
 }
 
