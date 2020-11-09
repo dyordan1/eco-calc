@@ -1,80 +1,92 @@
 import React from 'react';
 import {getSkill, getRecipeData} from './recipe_data.js';
 import {getItemData} from './item_data.js';
+import {v4} from 'uuid';
 
 const defaultPricing = {
-  "Acorn": 1.0,
-	"Clay": 1.0,
-	"Agave Leaves": 1.0,
-	"Dirt": 1.0,
-	"Amanita Mushrooms": 1.0,
-	"Basalt": 1.0,
-	"Gneiss": 1.0,
-	"Granite": 1.0,
-	"Limestone": 1.0,
-	"Sandstone": 1.0,
-	"Shale": 1.0,
-	"Beet": 1.0,
-	"Corn": 1.0,
-	"Heart Of Palm": 1.0,
-	"Wood Pulp": 1.0,
-	"Taro Root": 1.0,
-	"Tomato": 1.0,
-	"Wheat": 1.0,
-	"Beans": 1.0,
-	"Beet Greens": 1.0,
-	"Bison Carcass": 1.0,
-	"Rice": 1.0,
-	"Bolete Mushrooms": 1.0,
-	"Camas Bulb": 1.0,
-	"Bass": 1.0,
-	"Blue Shark": 1.0,
-	"Cod": 1.0,
-	"Crab Carcass": 1.0,
-	"Moon Jellyfish": 1.0,
-	"Pacific Sardine": 1.0,
-	"Salmon": 1.0,
-	"Trout": 1.0,
-	"Tuna": 1.0,
-	"Pumpkin": 1.0,
-	"Giant Cactus Fruit": 1.0,
-	"Fireweed Shoots": 1.0,
-	"Papaya": 1.0,
-	"Pineapple": 1.0,
-	"Urchin": 1.0,
-	"Birch Log": 1.0,
-	"Cedar Log": 1.0,
-	"Ceiba Log": 1.0,
-	"Fir Log": 1.0,
-	"Joshua Log": 1.0,
-	"Oak Log": 1.0,
-	"Palm Log": 1.0,
-	"Redwood Log": 1.0,
-	"Saguaro Rib": 1.0,
-	"Spruce Log": 1.0,
-	"Compost": 1.0,
-	"Cookeina Mushrooms": 1.0,
-	"Crimini Mushrooms": 1.0,
-	"Copper Ore": 1.0,
-	"Gold Ore": 1.0,
-	"Iron Ore": 1.0,
-	"Elk Carcass": 1.0,
-	"Prickly Pear Fruit": 1.0,
-	"Fiddleheads": 1.0,
-	"Huckleberries": 1.0,
-	"Mountain Goat Carcass": 1.0,
-	"Kelp": 1.0,
-	"Bighorn Carcass": 1.0,
-	"Clam": 1.0,
-	"Alligator Carcass": 1.0,
-	"Jaguar Carcass": 1.0,
-	"Wolf Carcass": 1.0
+  "Acorn": 10,
+	"Clay": 10,
+	"Agave Leaves": 10,
+	"Dirt": 10,
+	"Amanita Mushrooms": 10,
+	"Basalt": 10,
+	"Gneiss": 10,
+	"Granite": 10,
+	"Limestone": 10,
+	"Sandstone": 10,
+	"Shale": 10,
+	"Beet": 10,
+	"Corn": 10,
+	"Heart Of Palm": 10,
+	"Wood Pulp": 10,
+	"Taro Root": 10,
+	"Tomato": 10,
+	"Wheat": 10,
+	"Beans": 10,
+	"Beet Greens": 10,
+	"Bison Carcass": 10,
+	"Rice": 10,
+	"Bolete Mushrooms": 10,
+	"Camas Bulb": 10,
+	"Bass": 10,
+	"Blue Shark": 10,
+	"Cod": 10,
+	"Crab Carcass": 10,
+	"Moon Jellyfish": 10,
+	"Pacific Sardine": 10,
+	"Salmon": 10,
+	"Trout": 10,
+	"Tuna": 10,
+	"Pumpkin": 10,
+	"Giant Cactus Fruit": 10,
+	"Fireweed Shoots": 10,
+	"Papaya": 10,
+	"Pineapple": 10,
+	"Urchin": 10,
+	"Birch Log": 10,
+	"Cedar Log": 10,
+	"Ceiba Log": 10,
+	"Fir Log": 10,
+	"Joshua Log": 10,
+	"Oak Log": 10,
+	"Palm Log": 10,
+	"Redwood Log": 10,
+	"Saguaro Rib": 10,
+	"Spruce Log": 10,
+	"Compost": 10,
+	"Cookeina Mushrooms": 10,
+	"Crimini Mushrooms": 10,
+	"Copper Ore": 10,
+	"Gold Ore": 10,
+	"Iron Ore": 10,
+	"Elk Carcass": 10,
+	"Prickly Pear Fruit": 10,
+	"Fiddleheads": 10,
+	"Huckleberries": 10,
+	"Mountain Goat Carcass": 10,
+	"Kelp": 10,
+	"Bighorn Carcass": 10,
+	"Clam": 10,
+	"Alligator Carcass": 10,
+	"Jaguar Carcass": 10,
+	"Wolf Carcass": 10,
+	"Big Bluestem Seed": 10,
+	"Deer Carcass": 10,
+	"Stone": 10,
+	"Coyote Carcass": 10,
+	"Fox Carcass": 10,
+	"Agouti Carcass": 10,
+	"Hare Carcass": 10,
+	"Otter Carcass": 10,
+	"Snapping Turtle Carcass": 10,
+	"Turkey Carcass": 10,
 }
 
 /** An in-game recipe that consumes certain items and produces other items. */
 class Recipe {
   /**
    * @constructor
+   * @param {string} id uuid to lookup recipe by.
    * @param {string} station where it's made
    * @param {string} skill what skill it requires
    * @param {number} craftTime time in minutes it takes to craft recipe
@@ -82,7 +94,8 @@ class Recipe {
    * @param {GameItemInstance[]} products the products made
    * @param {number} [price] (cached) price for this item.
    */
-  constructor(station, skill, craftTime, ingredients, products, price = 20) {
+  constructor(id, station, skill, craftTime, ingredients, products, price = undefined) {
+    this.id = id;
     this.station = station;
     this.skill = skill;
     this.craftTime = craftTime
@@ -126,6 +139,7 @@ class GameItem {
     this.label = label;
     this.type = type;
     this.children = [];
+    this.parents = [];
     this.price = 0.0;
   }
 
@@ -134,11 +148,12 @@ class GameItem {
    * @param {GameItem} child A child game item
    */
   addChild(child) {
-    if (this.type != ItemType.TAG) {
+    if (this.type !== ItemType.TAG) {
       return;
     }
 
     this.children.push(child);
+    child.parents.push(this);
   }
 
   setPrice(price) {
@@ -152,6 +167,7 @@ export default class LocalDB {
   constructor(cookies) {
     this.initialized = false;
     this.recipes = new Map();
+    this.products = new Map();
     this.rawMats = new Map();
     this.items = new Map();
     this.backgroundWorker = new Worker('worker.js');
@@ -163,7 +179,6 @@ export default class LocalDB {
       this.sessionPricing = JSON.parse(cookies.get('rawGoodsPricing', {doNotParse: true}));
       if (this.sessionPricing === undefined) {
         this.sessionPricing = defaultPricing;
-        this.sessionPricing = cookies.set('rawGoodsPricing', JSON.stringify(defaultPricing));
       }
     } else {
       this.sessionPricing = defaultPricing;
@@ -223,34 +238,26 @@ export default class LocalDB {
                 allProducts.set(label, item);
               }
 
+              let newRecipe = new Recipe(
+                  v4(),
+                  craftingStation,
+                  skillNeeded,
+                  craftTime,
+                  ingredientList,
+                  productList);
+
               for (let i = 0; i < productList.length; i++) {
                 const product = productList[i];
-                if (!this.recipes.has(product.item.label)) {
-                  this.recipes.set(product.item.label, []);
+                if (!this.products.has(product.item.label)) {
+                  this.products.set(product.item.label, []);
                 }
 
-                this.recipes.get(product.item.label).push(
-                    new Recipe(
-                        craftingStation,
-                        skillNeeded,
-                        craftTime,
-                        ingredientList,
-                        productList));
+                this.recipes.set(newRecipe.id, newRecipe);
+                this.products.get(product.item.label).push(newRecipe);
               }
             }
           }
         }
-      }
-
-      // All ingredients that don't come up as products are considered
-      // "raw", i.e. harvested
-      const rawMats = [...allIngredients.values()].filter(
-          (item) =>
-            !allProducts.has(item.label) && item.type == ItemType.ITEM);
-      for (let i=0; i < rawMats.length; i++) {
-        const item = rawMats[i];
-        item.setPrice(this.sessionPricing[item.label]);
-        this.rawMats.set(item.label, item);
       }
 
       const itemDutta = getItemData();
@@ -265,17 +272,32 @@ export default class LocalDB {
           for (let i=0; i < tagItems.length; i++) {
             const itemLabel = tagItems[i];
             if (!this.items.has(itemLabel)) {
-              this.items.set(itemLabel, new GameItem(itemLabel, ItemType.ITEM));
+              let item = new GameItem(itemLabel, ItemType.ITEM)
+              this.items.set(itemLabel, item);
             }
             const item = this.items.get(itemLabel);
+            if (allIngredients.has(tagLabel)) {
+              allIngredients.set(itemLabel, item);
+            }
             tag.addChild(item);
           }
         }
       }
 
-      console.log(this.rawMats);
+      // All ingredients that don't come up as products are considered
+      // "raw", i.e. harvested
+      const rawMats = [...allIngredients.values()].filter(
+          (item) =>
+            !allProducts.has(item.label) && item.type !== ItemType.TAG);
+      for (let i=0; i < rawMats.length; i++) {
+        const item = rawMats[i];
+        item.setPrice(this.sessionPricing[item.label]);
+        this.rawMats.set(item.label, item);
+      }
 
+      this.updating = false;
       this.initialized = true;
+      this.flushRawMatPricing();
       resolve(this);
     });
   }
@@ -300,7 +322,9 @@ export default class LocalDB {
   }
 
   flushRawMatPricing() {
-    this.setCookie('rawGoodsPricing', this.sessionPricing)
+    //this.setCookie('rawGoodsPricing', this.sessionPricing);
+    console.log(this.items);
+    this.backgroundWorker.postMessage({type: 'recalculate', payload: {recipes: this.recipes, items: this.items}});
   }
 }
 

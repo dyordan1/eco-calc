@@ -1,17 +1,18 @@
-function setCookie(name,value,days) {
-    var expires = "";
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days*24*60*60*1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-}
-
 onmessage = function(e) {
-  if(e.data.type == 'cookie') {
+  if(e.data.type == 'recalculate') {
     payload = e.data.payload;
-    setCookie(payload.key, payload.value, 30);
+
+    payload.recipes.forEach((recipe) => {
+      for (let i = 0; i < recipe.products.length; i++) {
+        let product = payload.items.get(recipe.products[i].item.label);
+        if (product.recipes === undefined) {
+          product.recipes = [];
+        }
+
+        product.recipes.push(recipe);
+      }
+    });
+
+    console.log(payload.items);
   }
-  postMessage('qwer');
 }

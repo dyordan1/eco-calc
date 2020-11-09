@@ -47,7 +47,7 @@ class App extends React.Component {
     } else {
       const listItems = [];
 
-      localdb.recipes.forEach((recipes) => {
+      localdb.products.forEach((recipes) => {
         const recipe = recipes[0];
         const key = v4();
         listItems.push(<Grid item key={key}>
