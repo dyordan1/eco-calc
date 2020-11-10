@@ -80,7 +80,7 @@ class Header extends React.Component {
     const {settingsOpen, slowAsShitPopupOpen, settingsTabOpen} = this.state;
 
     return <div className={classes.root}>
-      <AppBar position="static">
+      <AppBar position="fixed">
         <Toolbar>
           <IconButton edge="start" color="inherit" className={classes.menuButton} aria-label="menu">
             <Menu />
@@ -91,6 +91,7 @@ class Header extends React.Component {
           <IconButton edge="end" color="inherit" onClick={() => this.handleClickOpen()}><Settings/></IconButton>
         </Toolbar>
       </AppBar>
+      <Toolbar />
       <Dialog fullWidth={true} maxWidth="lg" onClose={() => this.handleClose()} aria-labelledby="simple-dialog-title" open={settingsOpen}>
         <DialogTitle id="simple-dialog-title">Set raw goods pricing</DialogTitle>
         <DialogContent>

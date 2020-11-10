@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import Header from './Header.js';
 import RecipeView from './RecipeView.js';
-import {Grid, CircularProgress, Snackbar, ButtonGroup, Button} from '@material-ui/core';
+import {Grid, CircularProgress, Snackbar, ButtonGroup, Button, Container, CssBaseline} from '@material-ui/core';
 import MuiAlert from '@material-ui/lab/Alert';
 import {withStyles} from '@material-ui/core/styles';
 import {v4} from 'uuid';
@@ -70,9 +70,12 @@ class App extends React.Component {
     }
 
     return (<>
+      <CssBaseline />
       <DBContext.Provider value={localdb}>
         <Header />
-        {appContent}
+        <Container>
+          {appContent}
+        </Container>
       </DBContext.Provider>
       <Snackbar open={openCookieConsent} autoHideDuration={6000}>
         <MuiAlert severity="warning" elevation={6} variant="filled">
