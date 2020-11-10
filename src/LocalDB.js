@@ -227,6 +227,10 @@ export default class LocalDB {
     }
   }
 
+  allowCookies(cookies) {
+    this.cookies = cookies;
+  }
+
   /** Initialize the DB */
   async init() {
     return new Promise((resolve) => {
