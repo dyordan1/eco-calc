@@ -177,6 +177,25 @@ class Product {
 
 /** Master database for all Eco data. */
 export default class LocalDB {
+  onMessage(e) {
+    if (e.data.type === 'calculatedPrice') {
+      let payload = e.data.payload;
+      let targetItem = this.products.get(payload.item.label);
+      if (targetItem !== undefined) {
+        targetItem.price = payload.item.price;
+        if (payload.bestRecipe !== undefined) {
+          targetItem.bestRecipe = payload.bestRecipe;
+        }
+      }
+    } else if (e.data.type === 'recalculationComplete') {
+      if (this.updateInterval) {
+        clearInterval(this.updateInterval);
+      }
+      this.updateInterval = undefined;
+      this.app.forceUpdate();
+    }
+  }
+
   /***/
   constructor(app, cookies) {
     this.app = app;
@@ -190,24 +209,7 @@ export default class LocalDB {
     this.debugWorker = false;
     this.updateInterval = undefined;
     this.backgroundWorker = new Worker('worker.js');
-    this.backgroundWorker.onmessage = (e) => {
-      if (e.data.type === 'calculatedPrice') {
-        let payload = e.data.payload;
-        let targetItem = this.products.get(payload.item.label);
-        if (targetItem !== undefined) {
-          targetItem.price = payload.item.price;
-          if (payload.bestRecipe !== undefined) {
-            targetItem.bestRecipe = payload.bestRecipe;
-          }
-        }
-      } else if (e.data.type === 'recalculationComplete') {
-        if (this.updateInterval) {
-          clearInterval(this.updateInterval);
-        }
-        this.updateInterval = undefined;
-        this.app.forceUpdate();
-      }
-    }
+    this.backgroundWorker.onmessage = ((e) => this.onMessage(e));
     if (cookies.get("consent") === "true") {
       this.cookies = cookies;
       let cookiePricing = cookies.get('rawGoodsPricing', {doNotParse: true});
@@ -374,6 +376,14 @@ export default class LocalDB {
   }
 
   flushRawMatPricing() {
+    this.backgroundWorker.terminate();
+    this.backgroundWorker = new Worker('worker.js');
+    this.backgroundWorker.onmessage = ((e) => this.onMessage(e));
+    this.products.forEach((product) => {
+      product.price = undefined;
+      product.bestRecipe = undefined;
+    });
+    this.app.forceUpdate();
     this.setCookie('rawGoodsPricing', this.sessionPricing);
     this.setCookie('tableUpgrades', Object.fromEntries([...this.tables.values()].map((table) => [table.label, table.installedUpgradeTier])));
     this.backgroundWorker.postMessage({type: 'recalculate', debug: this.debugWorker, payload: {recipes: this.recipes, items: this.items, tables: this.tables}});
