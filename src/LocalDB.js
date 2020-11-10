@@ -186,9 +186,9 @@ export default class LocalDB {
     this.rawMats = new Map();
     this.items = new Map();
     this.tables = new Map();
-    setTimeout(function() {
-      app.forceUpdate();
-    }, 5000);
+    // Change this to debug all the crap going on in background worker.
+    this.debugWorker = false;
+    this.updateInterval = undefined;
     this.backgroundWorker = new Worker('worker.js');
     this.backgroundWorker.onmessage = (e) => {
       if (e.data.type === 'calculatedPrice') {
@@ -200,6 +200,12 @@ export default class LocalDB {
             targetItem.bestRecipe = payload.bestRecipe;
           }
         }
+      } else if (e.data.type === 'recalculationComplete') {
+        if (this.updateInterval) {
+          clearInterval(this.updateInterval);
+        }
+        this.updateInterval = undefined;
+        this.app.forceUpdate();
       }
     }
     if (cookies.get("consent") === "true") {
@@ -370,7 +376,14 @@ export default class LocalDB {
   flushRawMatPricing() {
     this.setCookie('rawGoodsPricing', this.sessionPricing);
     this.setCookie('tableUpgrades', Object.fromEntries([...this.tables.values()].map((table) => [table.label, table.installedUpgradeTier])));
-    this.backgroundWorker.postMessage({type: 'recalculate', payload: {recipes: this.recipes, items: this.items, tables: this.tables}});
+    this.backgroundWorker.postMessage({type: 'recalculate', debug: this.debugWorker, payload: {recipes: this.recipes, items: this.items, tables: this.tables}});
+    if (this.updateInterval) {
+      clearInterval(this.updateInterval);
+    }
+    let app = this.app;
+    this.updateInterval = setInterval(function() {
+      app.forceUpdate();
+    }, 2000);
   }
 }
 

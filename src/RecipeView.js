@@ -43,6 +43,8 @@ export default function RecipeView(props) {
   let price = props.recipe.price;
   if (price === undefined) {
     price = "···";
+  } else {
+    price = price.toFixed(2);
   }
 
   return (
