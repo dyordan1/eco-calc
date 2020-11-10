@@ -202,6 +202,7 @@ export default class LocalDB {
     this.initialized = false;
     this.recipes = new Map();
     this.products = new Map();
+    this.productFilters = new Set();
     this.rawMats = new Map();
     this.items = new Map();
     this.tables = new Map();
@@ -221,6 +222,10 @@ export default class LocalDB {
       this.sessionTableData = cookies.get('tableUpgrades', {doNotParse: true});
       if (this.sessionTableData !== undefined) {
         this.sessionTableData = JSON.parse(this.sessionTableData);
+      }
+      let cookieFilters = cookies.get('productFilters', {doNotParse: true});
+      if (cookieFilters !== undefined) {
+        this.productFilters = new Set(JSON.parse(cookieFilters));
       }
     } else {
       this.sessionPricing = defaultPricing;
@@ -363,6 +368,37 @@ export default class LocalDB {
 
   updateTableTier(label, value) {
     this.tables.get(label).installedUpgradeTier = value;
+  }
+
+  addProductFilter(filter) {
+    this.productFilters.add(filter);
+    this.setCookie('productFilters', [...this.productFilters]);
+    this.app.forceUpdate();
+  }
+
+  removeProductFilter(filter) {
+    this.productFilters.delete(filter);
+    this.setCookie('productFilters', [...this.productFilters]);
+    this.app.forceUpdate();
+  }
+
+  getProducts() {
+    if (this.productFilters.size === 0) {
+      return this.products;
+    }
+
+    let products = new Map();
+    this.products.forEach((product, key) => {
+      for (let i = 0; i < product.recipes.length; i++) {
+        let recipe = product.recipes[0];
+        if (this.productFilters.has(recipe.station)) {
+          products.set(key, product);
+          break;
+        }
+      }
+    });
+
+    return products;
   }
 
   setCookie(name,value,days) {

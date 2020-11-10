@@ -50,7 +50,7 @@ class App extends React.Component {
     } else {
       const listItems = [];
 
-      localdb.products.forEach((product, productLabel) => {
+      localdb.getProducts().forEach((product, productLabel) => {
         if (productLabel === 'Lumber') {
           // TODO: allow tags and items with the same name to co-exist...
           return;
