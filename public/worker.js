@@ -101,6 +101,7 @@ onmessage = function(e) {
           }
 
           let minPrice = undefined;
+          let bestRecipe = undefined;
           if (item.type === 'TAG') {
             for (let i = 0; i < item.children.length; i++) {
               let child = item.children[i];
@@ -116,12 +117,24 @@ onmessage = function(e) {
             if (item.recipes) {
               for (let i = 0; i < item.recipes.length; i++) {
                 let recipe = item.recipes[i];
-                if (recipe.price === undefined && !recipesInStack.has(recipe)) {
-                  calculationTasks.push({type: 'recipe', o: recipe});
-                  minPrice = NaN;
-                }
-                if (minPrice === undefined || minPrice > recipe.price) {
-                  minPrice = recipe.price;
+                if (recipe.price === undefined) {
+                  if (!recipesInStack.has(recipe)) {
+                    calculationTasks.push({type: 'recipe', o: recipe});
+                    minPrice = NaN;
+                  }
+                } else {
+                  let itemPrice = recipe.price;
+                  for (let i = 0; i < recipe.products.length; i++) {
+                    let product = recipe.products[i];
+                    if (product.item.label === item.label) {
+                      itemPrice /= product.count;
+                      break;
+                    }
+                  }
+                  if (minPrice === undefined || minPrice > itemPrice) {
+                    bestRecipe = recipe;
+                    minPrice = itemPrice;
+                  }
                 }
               }
             }
@@ -129,7 +142,10 @@ onmessage = function(e) {
 
           if (minPrice === undefined || !isNaN(minPrice)) {
             logItem('<Price ' + minPrice + '>', item);
-            if (minPrice != undefined) {
+            if (minPrice !== undefined) {
+              if (bestRecipe !== undefined) {
+                item.bestRecipe = bestRecipe;
+              }
               item.price = minPrice;
               itemsInStack.delete(item);
             }
@@ -144,17 +160,7 @@ onmessage = function(e) {
         }
       }
 
-      let bestRecipe = undefined;
-      if (topLevelItem.recipes !== undefined) {
-        for (let i = 0; i < topLevelItem.recipes.length; i++) {
-          if (topLevelItem.recipes[i].price == topLevelItem.price) {
-            bestRecipe = topLevelItem.recipes[i];
-            break;
-          }
-        }
-      }
-
-      postMessage({type: 'calculatedPrice', payload: {item: topLevelItem, bestRecipe: bestRecipe}});
+      postMessage({type: 'calculatedPrice', payload: {item: topLevelItem, bestRecipe: topLevelItem.bestRecipe}});
     });
 
     postMessage({type: 'recalculationComplete'});
