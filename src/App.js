@@ -28,6 +28,9 @@ class App extends React.Component {
 
   setCookieConsent(value) {
     this.props.cookies.set("consent", value);
+    if (value === true) {
+      this.state.localdb.allowCookies(this.props.cookies);
+    }
     this.setState({
       openCookieConsent: false
     })
