@@ -3,6 +3,7 @@ import {withStyles} from '@material-ui/core/styles';
 import {AppBar, Tabs, Tab, Select, MenuItem, Backdrop, CircularProgress, Card, CardContent, Toolbar, Typography, IconButton, Dialog, DialogTitle, DialogContent, Grid, TextField} from '@material-ui/core';
 import {Menu, Settings} from '@material-ui/icons';
 import {DBContext} from './LocalDB.js';
+import SearchBar from './Search.js';
 
 const styles = (theme) => ({
   root: {
@@ -12,7 +13,10 @@ const styles = (theme) => ({
     marginRight: theme.spacing(2),
   },
   title: {
-    flexGrow: 1,
+    display: 'none',
+    [theme.breakpoints.up('sm')]: {
+      display: 'block',
+    },
   },
   card: {
     width: 150,
@@ -22,7 +26,10 @@ const styles = (theme) => ({
   },
   slowAsShitBackdrop: {
     zIndex: 1,
-  }
+  },
+  grow: {
+    flexGrow: 1,
+  },
 });
 
 class Header extends React.Component {
@@ -88,6 +95,8 @@ class Header extends React.Component {
           <Typography variant="h6" className={classes.title}>
             Eco Calculator
           </Typography>
+          <SearchBar />
+          <div className={classes.grow} />
           <IconButton edge="end" color="inherit" onClick={() => this.handleClickOpen()}><Settings/></IconButton>
         </Toolbar>
       </AppBar>
