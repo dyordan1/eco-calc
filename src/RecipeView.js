@@ -53,7 +53,7 @@ export default function RecipeView(props) {
         <Grid container justify="space-between">
           <Grid item key={props.recipeId+'-left'}>
             <Typography className={classes.title} color="textSecondary" gutterBottom>
-              {props.recipe.station}
+              {props.recipe.station.label}
             </Typography>
           </Grid>
           <Grid item key={props.recipeId+'-right'}>
@@ -66,7 +66,7 @@ export default function RecipeView(props) {
           {formatProducts(props.recipe.products, props.recipeId)}
         </Typography>
         <Typography className={classes.pos} color="textSecondary">
-          {props.recipe.skill}
+          {props.recipe.skill && (props.recipe.skill.label + ' L' + props.recipe.skill.level)}
         </Typography>
       </CardContent>
     </Card>

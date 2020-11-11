@@ -11,7 +11,7 @@ export const getSkill = (skillArr) => {
     return undefined;
   }
 
-  return skillArr[0][0];
+  return [skillArr[0][0], parseInt(skillArr[0][1])];
 };
 
 export const getRecipeData = () => {
@@ -2065,7 +2065,7 @@ export const getRecipeData = () => {
         'checkImage': '1',
         'untranslated': 'Board Recipe',
         'craftStn': ['Carpentry Table'],
-        'skillNeeds': [['Carpentry', '1']],
+        '': [['Carpentry', '1']],
         'moduleNeeds': undefined,
         'baseCraftTime': '0.2',
         'baseLaborCost': '60',

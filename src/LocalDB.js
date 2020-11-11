@@ -82,6 +82,13 @@ const defaultPricing = {
 	"Turkey Carcass": 4,
 }
 
+class CraftingSkill {
+  constructor(label, level) {
+   this.label = label;
+   this.level = level;
+  }
+}
+
 class CraftingTable {
   constructor(label, installedUpgradeTier = 0) {
    this.label = label;
@@ -202,10 +209,13 @@ export default class LocalDB {
     this.initialized = false;
     this.recipes = new Map();
     this.products = new Map();
-    this.productFilters = new Set();
+    this.productFilters = new Map();
+    this.productFilters.set('tables', new Set());
+    this.productFilters.set('skills', new Map());
     this.rawMats = new Map();
     this.items = new Map();
     this.tables = new Map();
+    this.skills = new Map();
     // Change this to debug all the crap going on in background worker.
     this.debugWorker = false;
     this.updateInterval = undefined;
@@ -225,7 +235,9 @@ export default class LocalDB {
       }
       let cookieFilters = cookies.get('productFilters', {doNotParse: true});
       if (cookieFilters !== undefined) {
-        this.productFilters = new Set(JSON.parse(cookieFilters));
+        cookieFilters = JSON.parse(cookieFilters);
+        this.productFilters.set('tables', new Set(cookieFilters.tables));
+        this.productFilters.set('skills', new Map(cookieFilters.skills));
       }
     } else {
       this.sessionPricing = defaultPricing;
@@ -251,7 +263,19 @@ export default class LocalDB {
         if ({}.hasOwnProperty.call(masterDutta.recipes, recipeName)) {
           const recipe = masterDutta.recipes[recipeName];
           const craftingStation = recipe.craftStn[0];
-          const skillNeeded = getSkill(recipe.skillNeeds);
+          let skillNeeded = getSkill(recipe.skillNeeds);
+          if (skillNeeded) {
+            if (!this.skills.has(skillNeeded[0])) {
+              this.skills.set(skillNeeded[0], new Map());
+            }
+
+            let skillMap = this.skills.get(skillNeeded[0]);
+            if (!skillMap.has(skillNeeded[1])) {
+              skillMap.set(skillNeeded[1], new CraftingSkill(skillNeeded[0], skillNeeded[1]));
+            }
+
+            skillNeeded = skillMap.get(skillNeeded[1]);
+          }
           const craftTime = recipe.baseCraftTime;
 
           // For each variant
@@ -296,10 +320,11 @@ export default class LocalDB {
                 }
                 this.tables.set(craftingStation, new CraftingTable(craftingStation, upgradeLevel));
               }
+              let station = this.tables.get(craftingStation);
 
               let newRecipe = new Recipe(
                   v4(),
-                  craftingStation,
+                  station,
                   skillNeeded,
                   craftTime,
                   ingredientList,
@@ -370,20 +395,75 @@ export default class LocalDB {
     this.tables.get(label).installedUpgradeTier = value;
   }
 
+  getProductFilters() {
+    let filters = [...this.productFilters.get('tables')].map((table) => ({type: 'table', label: table}));
+
+    this.productFilters.get('skills').forEach((value, key) => filters.push({type: 'skill', label: key, level: value}));
+
+    return filters;
+  }
+
+  getSuggestionsFor(value) {
+    console.log(this.productFilters);
+    let filters = [];
+    let tablesArr = [...this.tables.keys()].filter((table) => !this.productFilters.get('tables').has(table) && table.toLowerCase().includes(value)).map((table) => ({type: 'table', label: table}));
+    if (tablesArr.length) {
+      filters.push({title:'Crafting Surfaces', suggestions: tablesArr});
+    }
+
+    let skillsArr = [];
+    this.skills.forEach((skillMap) => {
+      skillMap.forEach((skill) => {
+        if (!this.productFilters.get('skills').has(skill.label) && skill.label.toLowerCase().includes(value)) {
+          skillsArr.push({type: 'skill', label: skill.label, level: skill.level});
+        }
+      })
+    });
+
+    if (skillsArr.length) {
+      filters.push({title:'Skills', suggestions: skillsArr});
+    }
+
+    console.log(filters);
+    return filters;
+  }
+
   addProductFilter(filter) {
-    this.productFilters.add(filter);
-    this.setCookie('productFilters', [...this.productFilters]);
+    if (filter.type == 'skill') {
+      this.productFilters.get('skills').set(filter.label, filter.level);
+    }
+    if (filter.type == 'table') {
+      this.productFilters.get('tables').add(filter.label);
+    }
+    this.setCookie('productFilters', {'tables': [...this.productFilters.get('tables').values()], 'skills': [...this.productFilters.get('skills').entries()]});
     this.app.forceUpdate();
   }
 
+  hasProductFilter(filter) {
+    if (filter.type == 'skill') {
+      return this.productFilters.get('skills').get(filter.label) === filter.level;
+    }
+    if (filter.type == 'table') {
+      return this.productFilters.get('tables').has(filter.label);
+    }
+  }
+
   removeProductFilter(filter) {
-    this.productFilters.delete(filter);
-    this.setCookie('productFilters', [...this.productFilters]);
+    if (filter.type == 'skill') {
+      this.productFilters.get('skills').delete(filter.label);
+    }
+    if (filter.type == 'table') {
+      this.productFilters.get('tables').delete(filter.label);
+    }
+    this.setCookie('productFilters', {'tables': [...this.productFilters.get('tables').values()], 'skills': [...this.productFilters.get('skills').entries()]});
     this.app.forceUpdate();
   }
 
   getProducts() {
-    if (this.productFilters.size === 0) {
+    console.log(this.productFilters);
+    let tableFilters = this.productFilters.get('tables');
+    let skillFilters = this.productFilters.get('skills');
+    if (tableFilters.size === 0 && skillFilters.size === 0) {
       return this.products;
     }
 
@@ -391,7 +471,16 @@ export default class LocalDB {
     this.products.forEach((product, key) => {
       for (let i = 0; i < product.recipes.length; i++) {
         let recipe = product.recipes[0];
-        if (this.productFilters.has(recipe.station)) {
+        let tableMatch = tableFilters.size === 0;
+        let skillMatch = skillFilters.size === 0 || recipe.skill === undefined;
+        if (!tableMatch && tableFilters.has(recipe.station.label)) {
+          tableMatch = true;
+        }
+        if (!skillMatch && skillFilters.has(recipe.skill.label) && skillFilters.get(recipe.skill.label) >= recipe.skill.level) {
+          skillMatch = true;
+        }
+
+        if (tableMatch && skillMatch) {
           products.set(key, product);
           break;
         }

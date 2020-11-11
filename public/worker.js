@@ -1,5 +1,5 @@
 upgradeMultiplier = function(tables, recipe) {
-  switch(tables.get(recipe.station).installedUpgradeTier) {
+  switch(tables.get(recipe.station.label).installedUpgradeTier) {
     case 0:
       return 1;
     case 1:

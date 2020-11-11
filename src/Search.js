@@ -3,7 +3,7 @@ import {fade, withStyles} from '@material-ui/core/styles';
 import Autosuggest from 'react-autosuggest'
 import match from 'autosuggest-highlight/match'
 import parse from 'autosuggest-highlight/parse'
-import {MenuItem, Paper} from '@material-ui/core';
+import {Chip, MenuItem, Paper} from '@material-ui/core';
 import {Search} from '@material-ui/icons';
 import {DBContext} from './LocalDB.js';
 import ChipInput from 'material-ui-chip-input'
@@ -68,7 +68,7 @@ class SearchBar extends React.Component {
       return;
     }
 
-    let suggestions =  [...this.context.tables.keys()].filter((table) => !this.context.productFilters.has(table) && table.toLowerCase().includes(value));
+    let suggestions = this.context.getSuggestionsFor(value);
     this.setState({
       suggestions: suggestions,
     })
@@ -87,7 +87,7 @@ class SearchBar extends React.Component {
   };
 
   handleAddChip (chip) {
-    if (!this.context.productFilters.has(chip)) {
+    if (!this.context.hasProductFilter(chip)) {
       this.context.addProductFilter(chip);
     }
     this.setState({
@@ -96,7 +96,7 @@ class SearchBar extends React.Component {
   }
 
   handleDeleteChip (chip, index) {
-    if (this.context.productFilters.has(chip)) {
+    if (this.context.hasProductFilter(chip)) {
       this.context.removeProductFilter(chip);
     }
     this.setState({
@@ -115,6 +115,10 @@ class SearchBar extends React.Component {
       <ChipInput
         clearInputValueOnChange
         onUpdateInput={onChange}
+        chipRenderer={({ value, text, chip, isFocused, isDisabled, isReadOnly, handleClick, handleDelete, className }, key) => {
+          console.log(value);
+          return <Chip label={value.type == 'skill' ? value.label + ' L' + value.level : value.label} onDelete={handleDelete}/>;
+        }}
         value={chips}
         inputRef={ref}
         {...other}
@@ -136,9 +140,17 @@ class SearchBar extends React.Component {
     return suggestion;
   }
 
+  getSectionSuggestions = (section) => {
+    return section.suggestions;
+  }
+
+  renderSectionTitle = (section) => {
+    return <strong>{section.title}</strong>;
+  }
+
   renderSuggestion (suggestion, { query, isHighlighted }) {
-    const matches = match(suggestion, query)
-    const parts = parse(suggestion, matches)
+    const matches = match(suggestion.label, query)
+    const parts = parse(suggestion.label, matches)
 
     return (
       <MenuItem
@@ -158,6 +170,7 @@ class SearchBar extends React.Component {
               </span>
             )
           })}
+          {suggestion.level !== undefined && ' L' + suggestion.level}
         </div>
       </MenuItem>
     )
@@ -171,8 +184,11 @@ class SearchBar extends React.Component {
               <Search />
             </div>
             <Autosuggest
+              multiSection={true}
               renderInputComponent={(props) => this.renderInput(props)}
               suggestions={this.state.suggestions}
+              getSectionSuggestions={this.getSectionSuggestions}
+              renderSectionTitle={this.renderSectionTitle}
               onSuggestionsFetchRequested={this.handleSuggestionsFetchRequested}
               onSuggestionsClearRequested={this.handleSuggestionsClearRequested}
               renderSuggestionsContainer={this.renderSuggestionsContainer}
@@ -180,7 +196,7 @@ class SearchBar extends React.Component {
               renderSuggestion={this.renderSuggestion}
               onSuggestionSelected={(e, { suggestionValue }) => { this.handleAddChip(suggestionValue); e.preventDefault() }}
               inputProps={{
-                chips: [...this.context.productFilters],
+                chips: [...this.context.getProductFilters()],
                 value: this.state.searchString,
                 onChange: this.handletextFieldInputChange,
                 onAdd: (chip) => this.handleAddChip(chip),
