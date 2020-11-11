@@ -3,13 +3,14 @@ import {fade, withStyles} from '@material-ui/core/styles';
 import Autosuggest from 'react-autosuggest'
 import match from 'autosuggest-highlight/match'
 import parse from 'autosuggest-highlight/parse'
-import {Chip, MenuItem, Paper} from '@material-ui/core';
+import {Chip, Divider, MenuItem, Paper} from '@material-ui/core';
 import {Search} from '@material-ui/icons';
 import {DBContext} from './LocalDB.js';
 import ChipInput from 'material-ui-chip-input'
 
 const styles = (theme) => ({
   search: {
+    flexGrow: 1,
     position: 'relative',
     borderRadius: theme.shape.borderRadius,
     backgroundColor: fade(theme.palette.common.white, 0.15),
@@ -42,10 +43,14 @@ const styles = (theme) => ({
     paddingLeft: `calc(1em + ${theme.spacing(4)}px)`,
     transition: theme.transitions.create('width'),
     width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: '20ch',
-    },
   },
+  suggestionsContainer: {
+    position: 'absolute',
+    width: '100%',
+  },
+  chip: {
+    margin: '0 2px',
+  }
 });
 
 class SearchBar extends React.Component {
@@ -116,8 +121,7 @@ class SearchBar extends React.Component {
         clearInputValueOnChange
         onUpdateInput={onChange}
         chipRenderer={({ value, text, chip, isFocused, isDisabled, isReadOnly, handleClick, handleDelete, className }, key) => {
-          console.log(value);
-          return <Chip label={value.type == 'skill' ? value.label + ' L' + value.level : value.label} onDelete={handleDelete}/>;
+          return <Chip className={this.props.classes.chip} label={value.type == 'skill' ? value.label + ' L' + value.level : value.label} onDelete={handleDelete}/>;
         }}
         value={chips}
         inputRef={ref}
@@ -126,11 +130,11 @@ class SearchBar extends React.Component {
     )
   }
 
-  renderSuggestionsContainer (options) {
+  renderSuggestionsContainer = (options) => {
     const { containerProps, children } = options
 
     return (
-      <Paper {...containerProps} square>
+      <Paper {...containerProps} className={this.props.classes.suggestionsContainer} square>
         {children}
       </Paper>
     )
@@ -145,7 +149,11 @@ class SearchBar extends React.Component {
   }
 
   renderSectionTitle = (section) => {
-    return <strong>{section.title}</strong>;
+    return <>
+      <Divider/>
+      <strong>{section.title}</strong>
+      <Divider/>
+    </>;
   }
 
   renderSuggestion (suggestion, { query, isHighlighted }) {

@@ -404,7 +404,6 @@ export default class LocalDB {
   }
 
   getSuggestionsFor(value) {
-    console.log(this.productFilters);
     let filters = [];
     let tablesArr = [...this.tables.keys()].filter((table) => !this.productFilters.get('tables').has(table) && table.toLowerCase().includes(value)).map((table) => ({type: 'table', label: table}));
     if (tablesArr.length) {
@@ -424,7 +423,6 @@ export default class LocalDB {
       filters.push({title:'Skills', suggestions: skillsArr});
     }
 
-    console.log(filters);
     return filters;
   }
 
@@ -460,7 +458,6 @@ export default class LocalDB {
   }
 
   getProducts() {
-    console.log(this.productFilters);
     let tableFilters = this.productFilters.get('tables');
     let skillFilters = this.productFilters.get('skills');
     if (tableFilters.size === 0 && skillFilters.size === 0) {
