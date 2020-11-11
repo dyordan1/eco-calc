@@ -427,10 +427,10 @@ export default class LocalDB {
   }
 
   addProductFilter(filter) {
-    if (filter.type == 'skill') {
+    if (filter.type === 'skill') {
       this.productFilters.get('skills').set(filter.label, filter.level);
     }
-    if (filter.type == 'table') {
+    if (filter.type === 'table') {
       this.productFilters.get('tables').add(filter.label);
     }
     this.setCookie('productFilters', {'tables': [...this.productFilters.get('tables').values()], 'skills': [...this.productFilters.get('skills').entries()]});
@@ -438,19 +438,19 @@ export default class LocalDB {
   }
 
   hasProductFilter(filter) {
-    if (filter.type == 'skill') {
+    if (filter.type === 'skill') {
       return this.productFilters.get('skills').get(filter.label) === filter.level;
     }
-    if (filter.type == 'table') {
+    if (filter.type === 'table') {
       return this.productFilters.get('tables').has(filter.label);
     }
   }
 
   removeProductFilter(filter) {
-    if (filter.type == 'skill') {
+    if (filter.type === 'skill') {
       this.productFilters.get('skills').delete(filter.label);
     }
-    if (filter.type == 'table') {
+    if (filter.type === 'table') {
       this.productFilters.get('tables').delete(filter.label);
     }
     this.setCookie('productFilters', {'tables': [...this.productFilters.get('tables').values()], 'skills': [...this.productFilters.get('skills').entries()]});

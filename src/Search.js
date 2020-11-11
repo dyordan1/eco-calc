@@ -121,7 +121,7 @@ class SearchBar extends React.Component {
         clearInputValueOnChange
         onUpdateInput={onChange}
         chipRenderer={({ value, text, chip, isFocused, isDisabled, isReadOnly, handleClick, handleDelete, className }, key) => {
-          return <Chip className={this.props.classes.chip} label={value.type == 'skill' ? value.label + ' L' + value.level : value.label} onDelete={handleDelete}/>;
+          return <Chip className={this.props.classes.chip} label={value.type === 'skill' ? value.label + ' L' + value.level : value.label} onDelete={handleDelete}/>;
         }}
         value={chips}
         inputRef={ref}
